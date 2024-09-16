@@ -1,0 +1,1789 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Island Fishing Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #87CEEB;
+            font-family: 'Arial', sans-serif;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 800px;
+            height: 800px;
+        }
+
+        #gameCanvas {
+            border: 2px solid #000;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 15px;
+        }
+
+        .ui-item {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .ui-item i {
+            margin-right: 5px;
+            font-size: 18px;
+        }
+
+        .icon-bag::before {
+            content: '🎒';
+        }
+
+        .icon-rod::before {
+            content: '🎣';
+        }
+
+        .icon-coin::before {
+            content: '💰';
+        }
+
+        #gameLog {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            width: 250px;
+            height: 120px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 10px;
+            border-radius: 10px;
+            overflow-y: scroll;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            z-index: 5;
+        }
+
+        #controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+
+
+        #market {
+            top: 350px;
+            left: 350px;
+        }
+
+        #upgradeShop {
+            top: 350px;
+            left: 470px;
+        }
+
+        #cloneShop {
+            top: 470px;
+            left: 350px;
+        }
+
+        #cloneInfo {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #87CEEB, #4169E1);
+            z-index: 10;
+            overflow: hidden;
+        }
+
+        #startScreen::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M30 50 Q 50 30, 70 50 T 110 50" stroke="rgba(255,255,255,0.3)" fill="none" stroke-width="2"/></svg>') repeat-x;
+            animation: wave 10s linear infinite;
+            opacity: 0.5;
+        }
+
+        @keyframes wave {
+            0% {
+                background-position-x: 0;
+            }
+
+            100% {
+                background-position-x: 100%;
+            }
+        }
+
+        #logo {
+            font-size: 48px;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        #startPrompt {
+            font-size: 24px;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .shop-ui {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 2px solid #4A2511;
+            border-radius: 10px;
+            padding: 20px;
+            width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .shop-ui h2 {
+            text-align: center;
+            color: #4A2511;
+            margin-bottom: 15px;
+        }
+
+        .shop-button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #8B4513;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .shop-button:hover {
+            background-color: #A0522D;
+        }
+
+        .shop-button:disabled {
+            background-color: #D3D3D3;
+            cursor: not-allowed;
+        }
+
+        #closeShopBtn {
+            background-color: #DC143C;
+        }
+
+        #closeShopBtn:hover {
+            background-color: #FF4500;
+        }
+
+
+        #travelShop {
+            top: 470px;
+            left: 470px;
+        }
+
+        #travelShopUI {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 2px solid #2F4F4F;
+            border-radius: 10px;
+            padding: 20px;
+            width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        #travelShopUI h2 {
+            text-align: center;
+            color: #2F4F4F;
+            margin-bottom: 15px;
+        }
+
+        #closeTravelShopBtn {
+            background-color: #DC143C;
+        }
+
+        #closeTravelShopBtn:hover {
+            background-color: #FF4500;
+        }
+
+        #collectionLogButton {
+            position: absolute;
+            bottom: 70px;
+            right: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 10px;
+        }
+
+        #fishList {
+            margin-bottom: 20px;
+        }
+
+        .fish-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .fish-item .checkmark {
+            margin-right: 10px;
+            color: green;
+            font-weight: bold;
+        }
+
+        #pagination {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        #pagination button {
+            margin: 0 5px;
+        }
+
+        .achievement-popup {
+            position: fixed;
+            top: 20px;
+            right: -300px;
+            width: 250px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            transition: right 0.5s ease-in-out;
+            z-index: 1000;
+        }
+
+        .achievement-popup.show {
+            right: 20px;
+        }
+
+        .achievement-popup h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            color: #ffd700;
+        }
+
+        .achievement-popup p {
+            margin: 0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="800"></canvas>
+        <div id="ui">
+            <div class="ui-item"><i class="icon-bag"></i> <span id="inventory">0/10</span></div>
+            <div class="ui-item"><i class="icon-rod"></i> <span id="rod">Basic Rod</span></div>
+            <div class="ui-item"><i class="icon-coin"></i> <span id="coins">0</span></div>
+        </div>
+        <div id="gameLog"></div>
+        <div id="controls">
+            <strong>Controls:</strong><br>
+            Arrow keys: Move<br>
+            Space: Fish<br>
+            Enter shop: Auto-sell/buy
+        </div>
+        <div id="cloneInfo">
+            Clones: <span id="cloneCount">0</span><br>
+            Clone Earnings: <span id="cloneEarnings">0</span>
+        </div>
+        <div id="collectionLogButton" class="ui-button">Collection Log</div>
+        <div id="startScreen">
+            <div id="logo">A FISHING GAME</div>
+            <div id="startPrompt">Press Enter To Start</div>
+        </div>
+        <div id="upgradeShopUI" class="shop-ui">
+            <h2>Upgrade Shop</h2>
+            <div id="rodUpgrades"></div>
+            <button id="nextStageBtn" class="shop-button">Advance to Next Stage</button>
+            <button id="closeShopBtn" class="shop-button">Close Shop</button>
+        </div>
+        <div id="cloneShopUI" class="shop-ui">
+            <h2>Clone Shop</h2>
+            <button id="buyCloneBtn" class="shop-button">Buy Clone</button>
+            <button id="closeCloneShopBtn" class="shop-button">Close Shop</button>
+        </div>
+        <div id="travelShopUI" class="shop-ui">
+            <h2>Travel Shop</h2>
+            <div id="stageButtons"></div>
+            <button id="closeTravelShopBtn" class="shop-button">Close Shop</button>
+        </div>
+        <div id="collectionLogModal" class="modal">
+            <div class="modal-content">
+                <h2>Collection Log</h2>
+                <div id="fishList"></div>
+                <div id="pagination"></div>
+                <button id="closeCollectionLogBtn" class="shop-button">Close</button>
+            </div>
+        </div>
+    </div>
+
+     <script src="stages.js"></script>  
+    <script>
+
+        // Add this after the collectionLog declaration
+        let achievements = {
+    fish: [
+        { id: 'fish1', name: "Novice Angler", requirement: 1, achieved: false },
+        { id: 'fish10', name: "Skilled Fisherman", requirement: 10, achieved: false },
+        { id: 'fish100', name: "Master of the Rod", requirement: 100, achieved: false },
+        { id: 'fish1000', name: "Fishing Legend", requirement: 1000, achieved: false },
+        { id: 'fish10000', name: "Poseidon's Chosen", requirement: 10000, achieved: false }
+    ],
+    collection : [
+    { id: 'collection5', name: "Novice Collector", requirement: 5, achieved: false },
+    { id: 'collection10', name: "Apprentice Collector", requirement: 10, achieved: false },
+    { id: 'collection15', name: "Enthusiastic Collector", requirement: 15, achieved: false },
+    { id: 'collection20', name: "Dedicated Collector", requirement: 20, achieved: false },
+    { id: 'collection25', name: "Seasoned Collector", requirement: 25, achieved: false },
+    { id: 'collection30', name: "Proficient Collector", requirement: 30, achieved: false },
+    { id: 'collection40', name: "Advanced Collector", requirement: 40, achieved: false },
+    { id: 'collection50', name: "Expert Collector", requirement: 50, achieved: false },
+    { id: 'collection60', name: "Master Collector", requirement: 60, achieved: false },
+    { id: 'collection75', name: "Elite Collector", requirement: 75, achieved: false },
+    { id: 'collection90', name: "Veteran Collector", requirement: 90, achieved: false },
+    { id: 'collection100', name: "Prestigious Collector", requirement: 100, achieved: false },
+    { id: 'collection125', name: "Renowned Collector", requirement: 125, achieved: false },
+    { id: 'collection150', name: "Illustrious Collector", requirement: 150, achieved: false },
+    { id: 'collection175', name: "Legendary Collector", requirement: 175, achieved: false },
+    { id: 'collection200', name: "Mythical Collector", requirement: 200, achieved: false },
+    { id: 'collection250', name: "Divine Collector", requirement: 250, achieved: false },
+    { id: 'collection300', name: "Transcendent Collector", requirement: 300, achieved: false },
+    { id: 'collection400', name: "Omniscient Collector", requirement: 400, achieved: false },
+    { id: 'collection500', name: "Ultimate Collector", requirement: 500, achieved: false },
+]
+};
+
+let totalFishCaught = 0;
+// Add a variable to track the number of unique fish caught
+let uniqueFishCaught = 0;
+function checkAchievements(category, value) {
+    achievements[category].forEach(achievement => {
+        if (!achievement.achieved && value >= achievement.requirement) {
+            achievement.achieved = true;
+            showAchievementPopup(achievement);
+        }
+    });
+}
+
+function showAchievementPopup(achievement) {
+    const popup = document.createElement('div');
+    popup.className = 'achievement-popup';
+    popup.innerHTML = `
+        <h3>Achievement Unlocked!</h3>
+        <p>${achievement.name}</p>
+    `;
+    document.body.appendChild(popup);
+
+    setTimeout(() => {
+        popup.classList.add('show');
+        setTimeout(() => {
+            popup.classList.remove('show');
+            setTimeout(() => {
+                document.body.removeChild(popup);
+            }, 500);
+        }, 3000);
+    }, 100);
+}
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const inventoryDisplay = document.getElementById('inventory');
+        const rodDisplay = document.getElementById('rod'); 
+        const coinsDisplay = document.getElementById('coins');
+        const gameLog = document.getElementById('gameLog');
+
+        const player = {
+            x: 400,
+            y: 400,
+            size: 30,
+            speed: 10,
+            inventory: 0,
+            maxInventory: 10,
+            rod: 'Basic Rod',
+            coins: 0,
+            direction: 'down',
+            targetX: 400,
+            targetY: 400
+        };
+
+        const island = {
+            x: 100,
+            y: 100,
+            width: 600,
+            height: 600
+        };
+
+        const market = {
+            x: island.x + 50,
+            y: island.y + 10,
+            width: 80,
+            height: 80
+        };
+
+        const upgradeShop = {
+            x: island.x + 190,
+            y: island.y + 10,
+            width: 80,
+            height: 80
+        };
+
+        const cloneShop = {
+            x: island.x + 330,
+            y: island.y + 10,
+            width: 80,
+            height: 80
+        };
+
+        const travelShop = {
+            x: island.x + 470,
+            y: island.y + 10,
+            width: 80,
+            height: 80
+        };
+
+        let currentRodIndex = 0;
+        let isFishing = false;
+        let fishingProgress = 0;
+        let fishingDirection = 1; // 1 for increasing, -1 for decreasing
+        let ripples = [];
+        // Add these variables at the top of your script
+        const startScreen = document.getElementById('startScreen');
+        let gameStarted = false;
+
+        let keys = {
+            ArrowUp: false,
+            ArrowDown: false,
+            ArrowLeft: false,
+            ArrowRight: false
+        };
+
+        let currentStage = 1;
+        const maxStage = 5;
+
+        let clones = [];
+        let cloneCount = 0;
+        let cloneEarnings = 0;
+
+        function Clone(x, y) {
+            this.x = x;
+            this.y = y;
+            this.size = 30;
+            this.speed = 5;
+            this.inventory = 0;
+            this.maxInventory = 10;
+            this.direction = 'down';
+            this.targetX = x;
+            this.targetY = y;
+            this.isFishing = false;
+            this.fishingProgress = 0;
+            this.fishingDirection = 1;
+            this.fishingSpot = null;
+            // Add a random color for the clone's shirt
+            this.shirtColor = getRandomColor();
+        }
+
+        // Add this function to generate a random color
+        function getRandomColor() {
+            const r = Math.floor(Math.random() * 256);
+            const g = Math.floor(Math.random() * 256);
+            const b = Math.floor(Math.random() * 256);
+            return `rgb(${r},${g},${b})`;
+        }
+
+        function drawIsland() {
+            // Base island color
+            ctx.fillStyle = stages[currentStage - 1].islandColor;
+            ctx.fillRect(island.x, island.y, island.width, island.height);
+
+            // Create texture
+            for (let x = island.x; x < island.x + island.width; x += 2) {
+                for (let y = island.y; y < island.y + island.height; y += 2) {
+                    let noise = 1;
+                    if (currentStage === 1) {
+                        // Sand texture
+                        if (noise < 0.1) {
+                            ctx.fillStyle = '#8B4513';
+                        } else if (noise < 0.2) {
+                            ctx.fillStyle = '#DEB887';
+                        } else if (noise < 0.5) {
+                            ctx.fillStyle = '#F4A460';
+                        } else {
+                            continue;
+                        }
+                    } else {
+                        // Volcanic rock texture
+                        if (noise < 0.1) {
+                            ctx.fillStyle = '#2F4F4F';
+                        } else if (noise < 0.2) {
+                            ctx.fillStyle = '#696969';
+                        } else if (noise < 0.5) {
+                            ctx.fillStyle = '#A9A9A9';
+                        } else {
+                            continue;
+                        }
+                    }
+                    ctx.fillRect(x, y, 2, 2);
+                }
+            }
+
+            // Add subtle wave patterns
+            ctx.strokeStyle = 'rgba(210, 180, 140, 0.3)';
+            ctx.lineWidth = 1;
+            for (let y = island.y; y < island.y + island.height; y += 20) {
+                ctx.beginPath();
+                ctx.moveTo(island.x, y);
+                for (let x = island.x; x < island.x + island.width; x += 10) {
+                    ctx.lineTo(x, y + Math.sin((x + y) / 60) * 3);
+                }
+                ctx.stroke();
+            }
+
+            // Add a subtle border
+            ctx.strokeStyle = '#A0522D';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(island.x, island.y, island.width, island.height);
+        }
+
+        function drawWater() {
+            ctx.fillStyle = stages[currentStage - 1].waterColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            drawIsland();
+            drawRipples();
+
+            // Add special effects for each stage
+            switch (currentStage) {
+                case 2:
+                    drawLavaBubbles();
+                    break;
+                case 3:
+                    drawClouds();
+                    break;
+                case 4:
+                    drawDeepSeaCreatures();
+                    break;
+                case 5:
+                    drawAlienStars();
+                    break;
+                default:
+                    drawDeepSeaCreatures();
+                    break;
+            }
+        }
+
+        function drawRipples() {
+            ctx.strokeStyle = stages[currentStage - 1].rippleColor;
+            ripples.forEach(ripple => {
+                ctx.beginPath();
+                ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
+                ctx.stroke();
+                ripple.radius += 0.2;
+                ripple.opacity -= 0.01;
+                if (ripple.opacity <= 0) {
+                    const index = ripples.indexOf(ripple);
+                    ripples.splice(index, 1);
+                }
+            });
+        }
+
+        function addRipple() {
+            if (Math.random() < 0.05) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                if (x < island.x || x > island.x + island.width || y < island.y || y > island.y + island.height) {
+                    ripples.push({ x, y, radius: 0, opacity: 1 });
+                }
+            }
+        }
+
+        function drawPlayer() {
+            ctx.save();
+            ctx.translate(player.x, player.y);
+
+            // Draw body
+            ctx.fillStyle = '#1E90FF';
+            ctx.beginPath();
+            ctx.arc(0, 0, player.size / 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw face
+            ctx.fillStyle = '#FFE4B5';
+            ctx.beginPath();
+            ctx.arc(0, -player.size / 6, player.size / 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw eyes
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(-player.size / 8, -player.size / 5, player.size / 16, 0, Math.PI * 2);
+            ctx.arc(player.size / 8, -player.size / 5, player.size / 16, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw fishing rod
+            ctx.strokeStyle = '#8B4513';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(player.size / 2, 0);
+            ctx.lineTo(player.size, -player.size / 2);
+            ctx.stroke();
+
+            // Draw fishing line
+            if (isFishing) {
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(player.size, -player.size / 2);
+                ctx.lineTo(player.size + 20, player.size / 2);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+
+        function drawFishingProgress() {
+            if (isFishing) {
+                // Draw background
+                ctx.fillStyle = '#808080';
+                ctx.fillRect(player.x - 25, player.y - 40, 50, 10);
+
+                // Draw progress
+                ctx.fillStyle = '#00FF00';
+                ctx.fillRect(player.x - 25, player.y - 40, 50 * (fishingProgress / 100), 10);
+
+                // Draw sweet spot
+                ctx.fillStyle = 'rgba(255, 215, 0, 0.5)'; // Semi-transparent gold
+                ctx.fillRect(player.x + 20, player.y - 40, 5, 10);
+
+                // Draw border
+                ctx.strokeStyle = '#000';
+                ctx.strokeRect(player.x - 25, player.y - 40, 50, 10);
+            }
+        }
+
+        function updateGameLog(message) {
+            const logEntry = document.createElement('div');
+            logEntry.textContent = message;
+            gameLog.appendChild(logEntry);
+            gameLog.scrollTop = gameLog.scrollHeight;
+        }
+
+        function updateUI() {
+            inventoryDisplay.textContent = `${player.inventory}/${player.maxInventory}`;
+            rodDisplay.textContent = player.rod;
+            coinsDisplay.textContent = player.coins;
+        }
+
+        function movePlayer() {
+            let dx = 0;
+            let dy = 0;
+
+            if (keys.ArrowUp) dy -= 1;
+            if (keys.ArrowDown) dy += 1;
+            if (keys.ArrowLeft) dx -= 1;
+            if (keys.ArrowRight) dx += 1;
+
+            if (dx !== 0 && dy !== 0) {
+                dx *= Math.SQRT1_2;
+                dy *= Math.SQRT1_2;
+            }
+
+            player.targetX = player.x + dx * player.speed;
+            player.targetY = player.y + dy * player.speed;
+
+            if (player.targetX > island.x && player.targetX < island.x + island.width &&
+                player.targetY > island.y && player.targetY < island.y + island.height) {
+                if (dx < 0) player.direction = 'left';
+                else if (dx > 0) player.direction = 'right';
+                else if (dy < 0) player.direction = 'up';
+                else if (dy > 0) player.direction = 'down';
+            } else {
+                player.targetX = player.x;
+                player.targetY = player.y;
+            }
+        }
+
+        function updatePlayerPosition() {
+            const dx = player.targetX - player.x;
+            const dy = player.targetY - player.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance > 1) {
+                const newX = player.x + dx * 0.1;
+                const newY = player.y + dy * 0.1;
+
+                // Check collision with shops
+                if (!isCollidingWithShops(newX, newY)) {
+                    player.x = newX;
+                    player.y = newY;
+                }
+            } else {
+                player.x = player.targetX;
+                player.y = player.targetY;
+            }
+
+            // Check if player is in any shop
+            const shops = [market, upgradeShop, cloneShop, travelShop];
+            let playerInShop = false;
+
+            for (let shop of shops) {
+                if (isPlayerInShop(shop)) {
+                    playerInShop = true;
+                    if (activeShop !== shop) {
+                        closeAllShops();
+                        openShop(shop);
+                    }
+                    break;
+                }
+            }
+
+            if (!playerInShop && activeShop) {
+                closeAllShops();
+            }
+        }
+
+
+        function isCollidingWithShops(x, y) {
+            const shops = [market, upgradeShop, cloneShop, travelShop];
+            for (let shop of shops) {
+                if (x > shop.x && x < shop.x + shop.width &&
+                    y > shop.y && y < shop.y + shop.height) {
+                    // Check if the player is at the front door
+                    const doorWidth = 20;
+                    const doorX = shop.x + (shop.width - doorWidth) / 2;
+                    const doorY = shop.y + shop.height - 10;
+                    if (x >= doorX && x <= doorX + doorWidth && y >= doorY) {
+                        return false; // Not colliding if at the front door
+                    }
+                    return true; // Colliding with the shop, but not at the front door
+                }
+            }
+            return false; // Not colliding with any shop
+        }
+            
+
+
+        function openShop(shop) {
+            activeShop = shop;
+            if (shop === market) {
+                sellFish();
+            } else if (shop === upgradeShop) {
+                openUpgradeShop();
+            } else if (shop === cloneShop) {
+                openCloneShop();
+            } else if (shop === travelShop) {
+                openTravelShop();
+            }
+        }
+
+        function closeAllShops() {
+            closeUpgradeShop();
+            closeCloneShop();
+            closeTravelShop();
+            activeShop = null;
+        }
+
+        // Add these variables at the top of your script
+        const upgradeShopUI = document.getElementById('upgradeShopUI');
+        const rodUpgrades = document.getElementById('rodUpgrades');
+        const nextStageBtn = document.getElementById('nextStageBtn');
+        const closeShopBtn = document.getElementById('closeShopBtn');
+
+        // Add these variables at the top of your script
+        const cloneShopUI = document.getElementById('cloneShopUI');
+        const buyCloneBtn = document.getElementById('buyCloneBtn');
+        const closeCloneShopBtn = document.getElementById('closeCloneShopBtn');
+
+        // Add this variable to track if the clone shop is open
+        let isCloneShopOpen = false;
+
+        function isPlayerInShop(shop) {
+            return player.x > shop.x && player.x < shop.x + shop.width &&
+                player.y > shop.y && player.y < shop.y + shop.height;
+        }
+        let isUpgradeShopOpen = false;
+
+        // Modify the openUpgradeShop function
+        function openUpgradeShop() {
+            if (!isUpgradeShopOpen) {
+                upgradeShopUI.style.display = 'block';
+                updateShopUI();
+                isUpgradeShopOpen = true;
+            }
+        }
+
+        function closeUpgradeShop() {
+            upgradeShopUI.style.display = 'none';
+            isUpgradeShopOpen = false;
+        }
+        let activeShop = null;
+
+        // Add event listeners for the shop buttons
+        nextStageBtn.addEventListener('click', () => {
+            advanceToNextStage();
+            closeUpgradeShop();
+        });
+
+        closeShopBtn.addEventListener('click', closeUpgradeShop);
+
+        // Add this function to update the shop UI
+        function updateShopUI() {
+            rodUpgrades.innerHTML = '';
+            const currentStageRods = stages[currentStage - 1].rods;
+
+            for (let i = currentRodIndex + 1; i < currentStageRods.length; i++) {
+                const rod = currentStageRods[i];
+                const button = document.createElement('button');
+                button.classList.add('shop-button');
+                button.textContent = `Buy ${rod.name} (${rod.price} coins)`;
+                button.disabled = player.coins < rod.price;
+                button.onclick = () => buyRod(i);
+                rodUpgrades.appendChild(button);
+            }
+
+            nextStageBtn.textContent = `Advance to Next Stage (500 coins)`;
+            nextStageBtn.disabled = currentStage >= maxStage || player.coins < 500;
+        }
+
+        // Add these new functions to handle the clone shop UI
+        function openCloneShop() {
+            if (!isCloneShopOpen) {
+                cloneShopUI.style.display = 'block';
+                updateCloneShopUI();
+                isCloneShopOpen = true;
+            }
+        }
+
+        function closeCloneShop() {
+            cloneShopUI.style.display = 'none';
+            isCloneShopOpen = false;
+        }
+
+        function updateCloneShopUI() {
+            buyCloneBtn.disabled = player.coins < 500 ** cloneCount;
+            buyCloneBtn.textContent = `Buy Clone (${500 ** cloneCount} coins)`;
+        }
+
+        let isTravelShopOpen = false;
+
+        function drawTravelShop() {
+            ctx.fillStyle = '#4B0082';
+            ctx.fillRect(travelShop.x, travelShop.y, travelShop.width, travelShop.height);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '12px Arial';
+            ctx.fillText('Travel', travelShop.x + 20, travelShop.y + 45);
+        }
+
+        function openTravelShop() {
+            if (!isTravelShopOpen) {
+                document.getElementById('travelShopUI').style.display = 'block';
+                updateTravelShopUI();
+                isTravelShopOpen = true;
+            }
+        }
+
+        function closeTravelShop() {
+            document.getElementById('travelShopUI').style.display = 'none';
+            isTravelShopOpen = false;
+        }
+
+        function updateTravelShopUI() {
+            const stageButtons = document.getElementById('stageButtons');
+            stageButtons.innerHTML = '';
+
+            stages.forEach((stage, index) => {
+                const button = document.createElement('button');
+                button.classList.add('shop-button');
+
+                if (unlockedStages.includes(index + 1)) {
+                    button.textContent = `Travel to ${stage.name}`;
+                    button.onclick = () => travelToStage(index + 1);
+                } else {
+                    const price = (index + 1) * 500 * (index ** 2);
+                    button.textContent = `Buy ${stage.name} (${price} coins)`;
+                    button.disabled = player.coins < price;
+                    button.onclick = () => buyStage(index + 1);
+                }
+
+                stageButtons.appendChild(button);
+            });
+        }
+
+        function travelToStage(stageNumber) {
+            currentStage = stageNumber;
+            player.x = 400;
+            player.y = 400;
+            updateGameLog(`Traveled to Stage ${stageNumber}: ${stages[stageNumber - 1].name}!`);
+            closeTravelShop();
+        }
+
+        function buyStage(stageNumber) {
+            const price = stageNumber * 500;
+            if (player.coins >= price) {
+                player.coins -= price;
+                currentStage = stageNumber;
+                player.x = 400;
+                player.y = 400;
+                unlockedStages.push(stageNumber);
+                updateGameLog(`Bought and traveled to Stage ${stageNumber}: ${stages[stageNumber - 1].name}!`);
+                updateUI();
+                closeTravelShop();
+            } else {
+                updateGameLog(`Not enough coins to buy Stage ${stageNumber}. Need ${price} coins.`);
+            }
+        }
+
+        // Modify the gameLoop function to include drawing the travel shop
+
+
+        // Add event listener for the close travel shop button
+        document.getElementById('closeTravelShopBtn').addEventListener('click', closeTravelShop);
+
+        // Modify the keydown event listener to close the travel shop with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (!gameStarted && e.key === 'Enter') {
+                startGame();
+            } else if (gameStarted) {
+                if (e.key in keys) {
+                    keys[e.key] = true;
+                }
+                if (e.key === ' ') {
+                    fish();
+                }
+                if (e.key === 'Escape') {
+                    closeUpgradeShop();
+                    closeCloneShop();
+                    closeTravelShop();
+                }
+            }
+        });
+
+        // ... rest of the existing code ...
+
+        // Modify the buyClone function to work with the new UI
+        function buyClone() {
+            if (player.coins >= 500 ** cloneCount) {
+                player.coins -= 500 ** cloneCount;
+                const newClone = new Clone(400, 400);
+                clones.push(newClone);
+                cloneCount++;
+                updateGameLog(`Bought a new clone for 500 coins!`);
+                updateUI();
+                updateCloneInfo();
+                updateCloneShopUI();
+            } else {
+                updateGameLog("Not enough coins to buy a clone. Need 500 coins.");
+            }
+        }
+
+        // Add event listeners for the clone shop buttons
+        buyCloneBtn.addEventListener('click', buyClone);
+        closeCloneShopBtn.addEventListener('click', closeCloneShop);
+
+        // Modify the keydown event listener to close the clone shop with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (!gameStarted && e.key === 'Enter') {
+                startGame();
+            } else if (gameStarted) {
+                if (e.key in keys) {
+                    keys[e.key] = true;
+                }
+                if (e.key === ' ') {
+                    fish();
+                }
+                if (e.key === 'Escape') {
+                    closeUpgradeShop();
+                    closeCloneShop();
+                }
+            }
+        });
+
+        function isPlayerAtShore() {
+            const margin = 10;
+            return (player.x <= island.x + margin || player.x >= island.x + island.width - margin ||
+                player.y <= island.y + margin || player.y >= island.y + island.height - margin);
+        }
+
+        // Add this new function to create and animate the pop-up
+        function showCatchPopup(x, y, fishName) {
+            const popup = document.createElement('div');
+            popup.textContent = `${fishName}!`;
+            popup.style.position = 'absolute';
+            popup.style.left = `${x - 20}px`; // Center above the player
+            popup.style.top = `${y - 70}px`; // Just above the player
+            popup.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+            popup.style.padding = '2px 5px';
+            popup.style.borderRadius = '3px';
+            popup.style.fontWeight = 'bold';
+            popup.style.fontSize = '12px';
+            popup.style.transition = 'all 0.5s ease-out';
+            popup.style.opacity = '0';
+            popup.style.transform = 'translateY(0px)';
+            popup.style.width = '50px';
+            popup.style.textAlign = 'center';
+
+            // Add this line to ensure the popup is positioned relative to the canvas
+            document.getElementById('gameContainer').appendChild(popup);
+
+            // Animate the popup
+            setTimeout(() => {
+                popup.style.opacity = '1';
+                popup.style.transform = 'translateY(-10px)';
+            }, 50);
+
+            // Remove the popup after animation
+            setTimeout(() => {
+                popup.style.opacity = '0';
+                popup.style.transform = 'translateY(-20px)';
+                setTimeout(() => {
+                    popup.parentNode.removeChild(popup);
+                }, 500);
+            }, 1000);
+        }
+
+        // Modify the fish() function to show the popup
+        function fish() {
+    if (isPlayerAtShore() && !isFishing && player.inventory < player.maxInventory) {
+        isFishing = true;
+        fishingProgress = 0;
+        fishingDirection = 1;
+    } else if (isFishing) {
+        if (fishingProgress >= 90 && fishingProgress <= 100) {
+            const caughtFish = catchRandomFish();
+            player.inventory++;
+            totalFishCaught++;
+            checkAchievements('fish', totalFishCaught);
+            isFishing = false;
+            updateGameLog(`Caught a ${caughtFish.name}! Value: ${caughtFish.value} coins. Inventory: ${player.inventory}/${player.maxInventory}`);
+            updateUI();
+            showCatchPopup(player.x, player.y, caughtFish.name);
+            
+            // Update collection log and check for new unique fish
+            if (!collectionLog[caughtFish.name]) {
+                collectionLog[caughtFish.name] = true;
+                uniqueFishCaught++;
+                checkAchievements('collection', uniqueFishCaught);
+            }
+        } else {
+            updateGameLog("Missed! Try to click when the bar is in the golden zone.");
+        }
+    }
+}
+
+        function catchRandomFish() {
+            const stageFish = stages[currentStage - 1].fish;
+            return stageFish[Math.floor(Math.random() * stageFish.length)];
+        }
+
+        function updateFishing() {
+            if (isFishing) {
+                const currentRod = stages[currentStage - 1].rods[currentRodIndex];
+                fishingProgress += fishingDirection * currentRod.catchSpeed;
+
+                if (fishingProgress >= 100 || fishingProgress <= 0) {
+                    fishingDirection *= -1; // Reverse direction
+                }
+            }
+        }
+
+        function sellFish() {
+            if (player.inventory > 0) {
+                const stageFish = stages[currentStage - 1].fish;
+                const averageFishValue = stageFish.reduce((sum, fish) => sum + fish.value, 0) / stageFish.length;
+                const profit = Math.round(player.inventory * averageFishValue);
+                player.coins += profit;
+                updateGameLog(`Sold ${player.inventory} fish for ${profit} coins!`);
+                player.inventory = 0;
+                updateUI();
+            }
+        }
+        function buyRod(rodIndex) {
+            const currentStageRods = stages[currentStage - 1].rods;
+            const rod = currentStageRods[rodIndex];
+
+            if (player.coins >= rod.price) {
+                player.coins -= rod.price;
+                currentRodIndex = rodIndex;
+                player.rod = rod.name;
+                updateGameLog(`Upgraded to ${rod.name} for ${rod.price} coins!`);
+                updateUI();
+                updateShopUI();
+                // Close the shop after successful purchase
+                closeUpgradeShop();
+            } else {
+                updateGameLog(`Not enough coins to buy ${rod.name}. Need ${rod.price} coins.`);
+            }
+        }
+
+        // Modify the advanceToNextStage function
+        function advanceToNextStage() {
+            if (currentStage < maxStage && player.coins >= 500) {
+                currentStage++;
+                player.coins -= 500;
+                player.x = 400;
+                player.y = 400;
+                currentRodIndex = 0;
+                player.rod = stages[currentStage - 1].rods[0].name;
+                if (!unlockedStages.includes(currentStage)) {
+                    unlockedStages.push(currentStage);
+                }
+                updateGameLog(`Advanced to Stage ${currentStage}: ${stages[currentStage - 1].name}! You start with a ${player.rod}.`);
+                updateUI();
+                updateShopUI();
+                // Close the shop after advancing to the next stage
+                closeUpgradeShop();
+            } else if (currentStage >= maxStage) {
+                updateGameLog("Congratulations! You've reached the final stage!");
+            } else {
+                updateGameLog("Not enough coins to advance to the next stage. Need 500 coins.");
+            }
+        }
+
+
+        function updateCloneInfo() {
+            document.getElementById('cloneCount').textContent = cloneCount;
+            document.getElementById('cloneEarnings').textContent = cloneEarnings;
+        }
+
+        function drawClones() {
+            clones.forEach(clone => {
+                ctx.save();
+                ctx.translate(clone.x, clone.y);
+
+                // Draw body (shirt) with random color
+                ctx.fillStyle = clone.shirtColor;
+                ctx.beginPath();
+                ctx.arc(0, 0, clone.size / 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw face
+                ctx.fillStyle = '#FFE4B5';
+                ctx.beginPath();
+                ctx.arc(0, -clone.size / 6, clone.size / 3, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw eyes
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(-clone.size / 8, -clone.size / 5, clone.size / 16, 0, Math.PI * 2);
+                ctx.arc(clone.size / 8, -clone.size / 5, clone.size / 16, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw fishing rod
+                ctx.strokeStyle = '#8B4513';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(clone.size / 2, 0);
+                ctx.lineTo(clone.size, -clone.size / 2);
+                ctx.stroke();
+
+                // Draw fishing line
+                if (clone.isFishing) {
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(clone.size, -clone.size / 2);
+                    ctx.lineTo(clone.size + 20, clone.size / 2);
+                    ctx.stroke();
+                }
+
+                ctx.restore();
+            });
+        }
+
+        function updateClones() {
+            clones.forEach(clone => {
+                if (clone.isFishing) {
+                    updateCloneFishing(clone);
+                } else if (clone.inventory < clone.maxInventory) {
+                    moveCloneToShore(clone);
+                } else {
+                    moveCloneToMarket(clone);
+                }
+            });
+        }
+
+        // Modify the updateCloneFishing() function to show the popup for clones
+        function updateCloneFishing(clone) {
+            const currentRod = stages[currentStage - 1].rods[currentRodIndex];
+            clone.fishingProgress += clone.fishingDirection * currentRod.catchSpeed;
+
+            if (clone.fishingProgress >= 100 || clone.fishingProgress <= 0) {
+                clone.fishingDirection *= -1;
+            }
+
+            if (clone.fishingProgress >= 90 && clone.fishingProgress <= 100) {
+                const caughtFish = catchRandomFish();
+                clone.inventory++;
+                totalFishCaught++;
+                checkAchievements('fish', totalFishCaught);
+                clone.isFishing = false;
+                if (clone.inventory >= clone.maxInventory) {
+                    moveCloneToMarket(clone);
+                }
+                showCatchPopup(clone.x, clone.y, caughtFish.name); // Add this line
+                
+                // Update collection log
+                collectionLog[caughtFish.name] = true;
+            }
+        }
+
+        function moveCloneToShore(clone) {
+            if (!clone.fishingSpot) {
+                clone.fishingSpot = getRandomShorePosition();
+            }
+            moveCloneTo(clone, clone.fishingSpot.x, clone.fishingSpot.y);
+
+            if (Math.abs(clone.x - clone.fishingSpot.x) < 5 && Math.abs(clone.y - clone.fishingSpot.y) < 5) {
+                clone.isFishing = true;
+                clone.fishingProgress = 0;
+                clone.fishingDirection = 1;
+            }
+        }
+
+        function getRandomShorePosition() {
+            const margin = 10;
+            const side = Math.floor(Math.random() * 4);
+            let x, y;
+
+            switch (side) {
+                case 0: // Top
+                    x = island.x + Math.random() * island.width;
+                    y = island.y - margin;
+                    break;
+                case 1: // Right
+                    x = island.x + island.width + margin;
+                    y = island.y + Math.random() * island.height;
+                    break;
+                case 2: // Bottom
+                    x = island.x + Math.random() * island.width;
+                    y = island.y + island.height + margin;
+                    break;
+                case 3: // Left
+                    x = island.x - margin;
+                    y = island.y + Math.random() * island.height;
+                    break;
+            }
+
+            return { x, y };
+        }
+
+        function moveCloneToMarket(clone) {
+            moveCloneTo(clone, market.x + market.width / 2, market.y + market.height / 2);
+
+            if (Math.abs(clone.x - (market.x + market.width / 2)) < 5 &&
+                Math.abs(clone.y - (market.y + market.height / 2)) < 5) {
+                sellCloneFish(clone);
+                clone.fishingSpot = null; // Reset fishing spot after selling
+            }
+        }
+
+        function moveCloneTo(clone, targetX, targetY) {
+            const dx = targetX - clone.x;
+            const dy = targetY - clone.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance > clone.speed) {
+                clone.x += (dx / distance) * clone.speed;
+                clone.y += (dy / distance) * clone.speed;
+            } else {
+                clone.x = targetX;
+                clone.y = targetY;
+            }
+        }
+
+        function sellCloneFish(clone) {
+            if (clone.inventory > 0) {
+                const stageFish = stages[currentStage - 1].fish;
+                const averageFishValue = stageFish.reduce((sum, fish) => sum + fish.value, 0) / stageFish.length;
+                const profit = Math.round(clone.inventory * averageFishValue);
+                const playerProfit = Math.round(profit * 0.3);
+                player.coins += playerProfit;
+                cloneEarnings += playerProfit;
+                clone.inventory = 0;
+                updateUI();
+                updateCloneInfo();
+            }
+        }
+
+        function drawShops() {
+    drawMarket();
+    drawUpgradeShop();
+    drawCloneShop();
+    drawTravelShop();
+}
+
+function drawMarket() {
+    // Main structure
+    ctx.fillStyle = '#F0E68C';
+    ctx.fillRect(market.x, market.y, market.width, market.height);
+
+    // Roof
+    ctx.fillStyle = '#8B4513';
+    ctx.beginPath();
+    ctx.moveTo(market.x - 10, market.y);
+    ctx.lineTo(market.x + market.width / 2, market.y - 30);
+    ctx.lineTo(market.x + market.width + 10, market.y);
+    ctx.fill();
+
+    // Windows
+    ctx.fillStyle = '#87CEEB';
+    drawWindow(market.x + 10, market.y + 15, 20, 20);
+    drawWindow(market.x + 50, market.y + 15, 20, 20);
+
+    // Door
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(market.x + 30, market.y + 40, 20, 30);
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.arc(market.x + 45, market.y + 55, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Sign
+    drawSign(market.x + 5, market.y - 50, 70, 20, '#FFD700', '#000000', 'Market', '14px Arial');
+
+    // Flower boxes
+    drawFlowerBox(market.x + 5, market.y + 70, 30, 10);
+    drawFlowerBox(market.x + 45, market.y + 70, 30, 10);
+}
+
+function drawUpgradeShop() {
+    // Main structure
+    ctx.fillStyle = '#9370DB';
+    ctx.fillRect(upgradeShop.x, upgradeShop.y, upgradeShop.width, upgradeShop.height);
+
+    // Roof
+    ctx.fillStyle = '#4B0082';
+    ctx.beginPath();
+    ctx.moveTo(upgradeShop.x - 10, upgradeShop.y);
+    ctx.lineTo(upgradeShop.x + upgradeShop.width / 2, upgradeShop.y - 35);
+    ctx.lineTo(upgradeShop.x + upgradeShop.width + 10, upgradeShop.y);
+    ctx.fill();
+
+    // Windows
+    ctx.fillStyle = '#E6E6FA';
+    drawWindow(upgradeShop.x + 10, upgradeShop.y + 15, 25, 25);
+    drawWindow(upgradeShop.x + 45, upgradeShop.y + 15, 25, 25);
+
+    // Door
+    ctx.fillStyle = '#4B0082';
+    ctx.fillRect(upgradeShop.x + 30, upgradeShop.y + 45, 20, 35);
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.arc(upgradeShop.x + 45, upgradeShop.y + 60, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Sign
+    drawSign(upgradeShop.x + 5, upgradeShop.y - 55, 70, 20, '#E6E6FA', '#4B0082', 'Upgrades', '12px Arial');
+
+    // Antenna
+    ctx.strokeStyle = '#C0C0C0';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(upgradeShop.x + upgradeShop.width / 2, upgradeShop.y - 35);
+    ctx.lineTo(upgradeShop.x + upgradeShop.width / 2, upgradeShop.y - 55);
+    ctx.stroke();
+    ctx.fillStyle = '#FF0000';
+    ctx.beginPath();
+    ctx.arc(upgradeShop.x + upgradeShop.width / 2, upgradeShop.y - 55, 3, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function drawCloneShop() {
+    // Main structure
+    ctx.fillStyle = '#98FB98';
+    ctx.fillRect(cloneShop.x, cloneShop.y, cloneShop.width, cloneShop.height);
+
+    // Roof
+    ctx.fillStyle = '#228B22';
+    ctx.beginPath();
+    ctx.moveTo(cloneShop.x - 10, cloneShop.y);
+    ctx.lineTo(cloneShop.x + cloneShop.width / 2, cloneShop.y - 32);
+    ctx.lineTo(cloneShop.x + cloneShop.width + 10, cloneShop.y);
+    ctx.fill();
+
+    // Windows
+    ctx.fillStyle = '#F0FFF0';
+    drawWindow(cloneShop.x + 10, cloneShop.y + 20, 20, 20);
+    drawWindow(cloneShop.x + 50, cloneShop.y + 20, 20, 20);
+
+    // Door
+    ctx.fillStyle = '#228B22';
+    ctx.fillRect(cloneShop.x + 30, cloneShop.y + 40, 20, 40);
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.arc(cloneShop.x + 45, cloneShop.y + 60, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Sign
+    drawSign(cloneShop.x + 5, cloneShop.y - 52, 70, 20, '#F0FFF0', '#228B22', 'Clones', '14px Arial');
+
+    // Plant pots
+    drawPlantPot(cloneShop.x - 5, cloneShop.y + 65, 15, 15);
+    drawPlantPot(cloneShop.x + cloneShop.width - 10, cloneShop.y + 65, 15, 15);
+}
+
+function drawTravelShop() {
+    // Main structure
+    ctx.fillStyle = '#87CEFA';
+    ctx.fillRect(travelShop.x, travelShop.y, travelShop.width, travelShop.height);
+
+    // Roof
+    ctx.fillStyle = '#4169E1';
+    ctx.beginPath();
+    ctx.moveTo(travelShop.x - 10, travelShop.y);
+    ctx.lineTo(travelShop.x + travelShop.width / 2, travelShop.y - 38);
+    ctx.lineTo(travelShop.x + travelShop.width + 10, travelShop.y);
+    ctx.fill();
+
+    // Windows
+    ctx.fillStyle = '#F0F8FF';
+    drawWindow(travelShop.x + 10, travelShop.y + 15, 25, 25);
+    drawWindow(travelShop.x + 45, travelShop.y + 15, 25, 25);
+
+    // Door
+    ctx.fillStyle = '#4169E1';
+    ctx.fillRect(travelShop.x + 30, travelShop.y + 45, 20, 35);
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.arc(travelShop.x + 45, travelShop.y + 60, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Sign
+    drawSign(travelShop.x + 5, travelShop.y - 58, 70, 20, '#F0F8FF', '#4169E1', 'Travel', '14px Arial');
+
+    // Flags
+    drawFlag(travelShop.x - 5, travelShop.y - 20, 15, 10, '#FF0000');
+    drawFlag(travelShop.x + travelShop.width - 10, travelShop.y - 20, 15, 10, '#00FF00');
+}
+
+function drawWindow(x, y, width, height) {
+    ctx.fillRect(x, y, width, height);
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, width, height);
+    ctx.beginPath();
+    ctx.moveTo(x + width / 2, y);
+    ctx.lineTo(x + width / 2, y + height);
+    ctx.moveTo(x, y + height / 2);
+    ctx.lineTo(x + width, y + height / 2);
+    ctx.stroke();
+}
+
+function drawSign(x, y, width, height, bgColor, textColor, text, font) {
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(x, y, width, height);
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, width, height);
+    ctx.fillStyle = textColor;
+    ctx.font = font;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, x + width / 2, y + height / 2);
+}
+
+function drawFlowerBox(x, y, width, height) {
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(x, y, width, height);
+    for (let i = 0; i < 3; i++) {
+        ctx.fillStyle = ['#FF0000', '#FFFF00', '#FF1493'][i];
+        ctx.beginPath();
+        ctx.arc(x + 5 + i * 10, y + 5, 3, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+function drawPlantPot(x, y, width, height) {
+    ctx.fillStyle = '#D2691E';
+    ctx.beginPath();
+    ctx.moveTo(x, y + height);
+    ctx.lineTo(x + width / 2, y);
+    ctx.lineTo(x + width, y + height);
+    ctx.fill();
+    ctx.fillStyle = '#228B22';
+    ctx.beginPath();
+    ctx.moveTo(x + width / 2, y);
+    ctx.lineTo(x + width / 2 - 5, y - 10);
+    ctx.lineTo(x + width / 2 + 5, y - 10);
+    ctx.fill();
+}
+
+function drawFlag(x, y, width, height, color) {
+    ctx.fillStyle = '#A0522D';
+    ctx.fillRect(x, y, 2, 30);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(x + 2, y);
+    ctx.lineTo(x + 2 + width, y + height / 2);
+    ctx.lineTo(x + 2, y + height);
+    ctx.fill();
+}
+        function gameLoop() {
+            if (!gameStarted) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawWater();
+            drawIsland();
+            drawShops(); // Add this line to draw all shops
+            movePlayer();
+            updatePlayerPosition();
+            drawPlayer();
+            drawFishingProgress();
+
+            updateFishing();
+            addRipple();
+
+            if (currentStage === 2) {
+                drawLavaBubbles();
+            }
+
+            drawClones();
+            updateClones();
+
+            requestAnimationFrame(gameLoop);
+        }
+        let unlockedStages = [1];
+        function drawLavaBubbles() {
+            ctx.fillStyle = '#FFA500';
+            for (let i = 0; i < 10; i++) {
+                let x = Math.random() * canvas.width;
+                let y = Math.random() * canvas.height;
+                if (x < island.x || x > island.x + island.width || y < island.y || y > island.y + island.height) {
+                    ctx.beginPath();
+                    ctx.arc(x, y, Math.random() * 5 + 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+
+        function drawClouds() {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            for (let i = 0; i < 5; i++) {
+                let x = Math.random() * canvas.width;
+                let y = Math.random() * (canvas.height / 2);
+                let size = Math.random() * 50 + 25;
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.arc(x + size * 0.5, y - size * 0.5, size * 0.7, 0, Math.PI * 2);
+                ctx.arc(x - size * 0.5, y - size * 0.5, size * 0.7, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function drawDeepSeaCreatures() {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            for (let i = 0; i < 20; i++) {
+                let x = Math.random() * canvas.width;
+                let y = Math.random() * canvas.height;
+                let size = Math.random() * 3 + 1;
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function drawAlienStars() {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            for (let i = 0; i < 100; i++) {
+                let x = Math.random() * canvas.width;
+                let y = Math.random() * canvas.height;
+                let size = Math.random() * 2 + 1;
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (!gameStarted && e.key === 'Enter') {
+                startGame();
+            } else if (gameStarted) {
+                if (e.key in keys) {
+                    keys[e.key] = true;
+                }
+                if (e.key === ' ') {
+                    fish();
+                }
+                if (e.key === 'Escape') {
+                    closeUpgradeShop();
+                    closeCloneShop();
+                    closeTravelShop();
+                }
+            }
+        });
+
+        canvas.addEventListener('click', fish);
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key in keys) {
+                keys[e.key] = false;
+            }
+        });
+
+        function startGame() {
+            gameStarted = true;
+            startScreen.style.display = 'none';
+            initializeCollectionLog();
+            gameLoop();
+        }
+
+        function initializeCollectionLog() {
+    stages.forEach(stage => {
+        stage.fish.forEach(fish => {
+            collectionLog[fish.name] = false;
+        });
+    });
+    uniqueFishCaught = 0;
+}
+    let collectionLog = {};
+    const fishPerPage = 12;
+    let currentPage = 1;
+    // Add these functions to handle the collection log modal
+    function openCollectionLog() {
+        document.getElementById('collectionLogModal').style.display = 'block';
+        updateCollectionLogUI();
+    }
+
+    function closeCollectionLog() {
+        document.getElementById('collectionLogModal').style.display = 'none';
+    }
+
+    function updateCollectionLogUI() {
+        const fishList = document.getElementById('fishList');
+        const pagination = document.getElementById('pagination');
+        fishList.innerHTML = '';
+        pagination.innerHTML = '';
+
+        const allFish = stages.flatMap(stage => stage.fish);
+        const totalPages = Math.ceil(allFish.length / fishPerPage);
+
+        const startIndex = (currentPage - 1) * fishPerPage;
+        const endIndex = startIndex + fishPerPage;
+        const pageFish = allFish.slice(startIndex, endIndex);
+
+        pageFish.forEach(fish => {
+            const fishItem = document.createElement('div');
+            fishItem.classList.add('fish-item');
+            fishItem.innerHTML = `
+                <span class="checkmark">${collectionLog[fish.name] ? '✓' : ''}</span>
+                <span>${fish.name} (${fish.value} coins)</span>
+            `;
+            fishList.appendChild(fishItem);
+        });
+
+        for (let i = 1; i <= totalPages; i++) {
+            const pageButton = document.createElement('button');
+            pageButton.textContent = i;
+            pageButton.classList.add('shop-button');
+            pageButton.addEventListener('click', () => {
+                currentPage = i;
+                updateCollectionLogUI();
+            });
+            pagination.appendChild(pageButton);
+        }
+    }
+
+    // Add event listeners for the collection log
+    document.getElementById('collectionLogButton').addEventListener('click', openCollectionLog);
+    document.getElementById('closeCollectionLogBtn').addEventListener('click', closeCollectionLog);
+        updateUI();
+    </script>
+</body>
+
+</html>
