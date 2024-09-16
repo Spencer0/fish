@@ -361,6 +361,103 @@
             margin: 0;
             font-size: 14px;
         }
+
+        /* Add these styles for the achievement log */
+        .achievement-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .achievement-item .checkmark {
+            margin-right: 10px;
+            color: green;
+            font-weight: bold;
+        }
+
+        .achievement-item .achievement-name {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .achievement-item .achievement-description {
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+
+        .achievement-item .achievement-progress {
+            font-style: italic;
+        }
+
+        #achievementLogButton {
+            position: absolute;
+            bottom: 110px;
+            right: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+        }
+
+        #collectionLogButton {
+            position: absolute;
+            bottom: 70px;
+            right: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+        }
+
+        .ui-button:hover {
+            background-color: rgba(240, 240, 240, 0.9);
+        }
+
+        /* Add or modify these styles for the achievement log pagination */
+        #achievementPagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        #achievementPagination button {
+            margin: 0 5px;
+        }
+
+        .achievement-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .achievement-item .checkmark {
+            margin-right: 10px;
+            color: green;
+            font-weight: bold;
+            width: 20px;
+        }
+
+        .achievement-item .achievement-name {
+            font-weight: bold;
+            margin-right: 10px;
+            width: 150px;
+        }
+
+        .achievement-item .achievement-description {
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+
+        .achievement-item .achievement-progress {
+            font-style: italic;
+            width: 100px;
+            text-align: right;
+        }
     </style>
 </head>
 
@@ -383,6 +480,7 @@
             Clones: <span id="cloneCount">0</span><br>
             Clone Earnings: <span id="cloneEarnings">0</span>
         </div>
+        <div id="achievementLogButton" class="ui-button">Achievement Log</div>
         <div id="collectionLogButton" class="ui-button">Collection Log</div>
         <div id="startScreen">
             <div id="logo">A FISHING GAME</div>
@@ -391,7 +489,6 @@
         <div id="upgradeShopUI" class="shop-ui">
             <h2>Upgrade Shop</h2>
             <div id="rodUpgrades"></div>
-            <button id="nextStageBtn" class="shop-button">Advance to Next Stage</button>
             <button id="closeShopBtn" class="shop-button">Close Shop</button>
         </div>
         <div id="cloneShopUI" class="shop-ui">
@@ -412,6 +509,14 @@
                 <button id="closeCollectionLogBtn" class="shop-button">Close</button>
             </div>
         </div>
+        <div id="achievementLogModal" class="modal">
+            <div class="modal-content">
+                <h2>Achievement Log</h2>
+                <div id="achievementList"></div>
+                <div id="achievementPagination"></div>
+                <button id="closeAchievementLogBtn" class="shop-button">Close</button>
+            </div>
+        </div>
     </div>
 
      <script src="stages.js"></script>  
@@ -420,33 +525,33 @@
         // Add this after the collectionLog declaration
         let achievements = {
     fish: [
-        { id: 'fish1', name: "Novice Angler", requirement: 1, achieved: false },
-        { id: 'fish10', name: "Skilled Fisherman", requirement: 10, achieved: false },
-        { id: 'fish100', name: "Master of the Rod", requirement: 100, achieved: false },
-        { id: 'fish1000', name: "Fishing Legend", requirement: 1000, achieved: false },
-        { id: 'fish10000', name: "Poseidon's Chosen", requirement: 10000, achieved: false }
+        { id: 'fish1', name: "Novice Angler", description: "Catch your first fish", requirement: 1, achieved: false },
+        { id: 'fish10', name: "Skilled Fisherman", description: "Catch 10 fish", requirement: 10, achieved: false },
+        { id: 'fish100', name: "Master of the Rod", description: "Catch 100 fish", requirement: 100, achieved: false },
+        { id: 'fish1000', name: "Fishing Legend", description: "Catch 1,000 fish", requirement: 1000, achieved: false },
+        { id: 'fish10000', name: "Poseidon's Chosen", description: "Catch 10,000 fish", requirement: 10000, achieved: false }
     ],
     collection : [
-    { id: 'collection5', name: "Novice Collector", requirement: 5, achieved: false },
-    { id: 'collection10', name: "Apprentice Collector", requirement: 10, achieved: false },
-    { id: 'collection15', name: "Enthusiastic Collector", requirement: 15, achieved: false },
-    { id: 'collection20', name: "Dedicated Collector", requirement: 20, achieved: false },
-    { id: 'collection25', name: "Seasoned Collector", requirement: 25, achieved: false },
-    { id: 'collection30', name: "Proficient Collector", requirement: 30, achieved: false },
-    { id: 'collection40', name: "Advanced Collector", requirement: 40, achieved: false },
-    { id: 'collection50', name: "Expert Collector", requirement: 50, achieved: false },
-    { id: 'collection60', name: "Master Collector", requirement: 60, achieved: false },
-    { id: 'collection75', name: "Elite Collector", requirement: 75, achieved: false },
-    { id: 'collection90', name: "Veteran Collector", requirement: 90, achieved: false },
-    { id: 'collection100', name: "Prestigious Collector", requirement: 100, achieved: false },
-    { id: 'collection125', name: "Renowned Collector", requirement: 125, achieved: false },
-    { id: 'collection150', name: "Illustrious Collector", requirement: 150, achieved: false },
-    { id: 'collection175', name: "Legendary Collector", requirement: 175, achieved: false },
-    { id: 'collection200', name: "Mythical Collector", requirement: 200, achieved: false },
-    { id: 'collection250', name: "Divine Collector", requirement: 250, achieved: false },
-    { id: 'collection300', name: "Transcendent Collector", requirement: 300, achieved: false },
-    { id: 'collection400', name: "Omniscient Collector", requirement: 400, achieved: false },
-    { id: 'collection500', name: "Ultimate Collector", requirement: 500, achieved: false },
+    { id: 'collection5', name: "Novice Collector", description: "Collect 5 unique fish", requirement: 5, achieved: false },
+    { id: 'collection10', name: "Apprentice Collector", description: "Collect 10 unique fish", requirement: 10, achieved: false },
+    { id: 'collection15', name: "Enthusiastic Collector", description: "Collect 15 unique fish", requirement: 15, achieved: false },
+    { id: 'collection20', name: "Dedicated Collector", description: "Collect 20 unique fish", requirement: 20, achieved: false },
+    { id: 'collection25', name: "Seasoned Collector", description: "Collect 25 unique fish", requirement: 25, achieved: false },
+    { id: 'collection30', name: "Proficient Collector", description: "Collect 30 unique fish", requirement: 30, achieved: false },
+    { id: 'collection40', name: "Advanced Collector", description: "Collect 40 unique fish", requirement: 40, achieved: false },
+    { id: 'collection50', name: "Expert Collector", description: "Collect 50 unique fish", requirement: 50, achieved: false },
+    { id: 'collection60', name: "Master Collector", description: "Collect 60 unique fish", requirement: 60, achieved: false },
+    { id: 'collection75', name: "Elite Collector", description: "Collect 75 unique fish", requirement: 75, achieved: false },
+    { id: 'collection90', name: "Veteran Collector", description: "Collect 90 unique fish", requirement: 90, achieved: false },
+    { id: 'collection100', name: "Prestigious Collector", description: "Collect 100 unique fish", requirement: 100, achieved: false },
+    { id: 'collection125', name: "Renowned Collector", description: "Collect 125 unique fish", requirement: 125, achieved: false },
+    { id: 'collection150', name: "Illustrious Collector", description: "Collect 150 unique fish", requirement: 150, achieved: false },
+    { id: 'collection175', name: "Legendary Collector", description: "Collect 175 unique fish", requirement: 175, achieved: false },
+    { id: 'collection200', name: "Mythical Collector", description: "Collect 200 unique fish", requirement: 200, achieved: false },
+    { id: 'collection250', name: "Divine Collector", description: "Collect 250 unique fish", requirement: 250, achieved: false },
+    { id: 'collection300', name: "Transcendent Collector", description: "Collect 300 unique fish", requirement: 300, achieved: false },
+    { id: 'collection400', name: "Omniscient Collector", description: "Collect 400 unique fish", requirement: 400, achieved: false },
+    { id: 'collection500', name: "Ultimate Collector", description: "Collect 500 unique fish", requirement: 500, achieved: false },
 ]
 };
 
@@ -458,6 +563,8 @@ function checkAchievements(category, value) {
         if (!achievement.achieved && value >= achievement.requirement) {
             achievement.achieved = true;
             showAchievementPopup(achievement);
+            player.coins += 1000;
+            updateAchievementLogUI(); // Update the achievement log UI when an achievement is unlocked
         }
     });
 }
@@ -467,7 +574,7 @@ function showAchievementPopup(achievement) {
     popup.className = 'achievement-popup';
     popup.innerHTML = `
         <h3>Achievement Unlocked!</h3>
-        <p>${achievement.name}</p>
+        <p>${achievement.name} (1000 coins)</p>
     `;
     document.body.appendChild(popup);
 
@@ -480,6 +587,82 @@ function showAchievementPopup(achievement) {
             }, 500);
         }, 3000);
     }, 100);
+}
+
+// Add these functions to handle the achievement log modal
+function openAchievementLog() {
+    document.getElementById('achievementLogModal').style.display = 'block';
+    currentAchievementPage = 1;
+    updateAchievementLogUI();
+}
+
+function closeAchievementLog() {
+    document.getElementById('achievementLogModal').style.display = 'none';
+}
+
+// Add these variables for achievement pagination
+const achievementsPerPage = 10;
+let currentAchievementPage = 1;
+
+// Modify the updateAchievementLogUI function to include pagination
+function updateAchievementLogUI() {
+    const achievementList = document.getElementById('achievementList');
+    const pagination = document.getElementById('achievementPagination');
+    achievementList.innerHTML = '';
+    pagination.innerHTML = '';
+
+    const allAchievements = Object.values(achievements).flat();
+    const totalPages = Math.ceil(allAchievements.length / achievementsPerPage);
+
+    const startIndex = (currentAchievementPage - 1) * achievementsPerPage;
+    const endIndex = startIndex + achievementsPerPage;
+    const pageAchievements = allAchievements.slice(startIndex, endIndex);
+
+    pageAchievements.forEach(achievement => {
+        const achievementItem = document.createElement('div');
+        achievementItem.classList.add('achievement-item');
+        achievementItem.innerHTML = `
+            <span class="checkmark">${achievement.achieved ? '✓' : ''}</span>
+            <span class="achievement-name">${achievement.name}</span>
+            <span class="achievement-description">${achievement.description}</span>
+            <span class="achievement-progress">${achievement.achieved ? 'Completed' : `${Math.min(getAchievementProgress(achievement.id.split('')[0], achievement.requirement), achievement.requirement)}/${achievement.requirement}`}</span>
+        `;
+        achievementList.appendChild(achievementItem);
+    });
+
+    for (let i = 1; i <= totalPages; i++) {
+        const pageButton = document.createElement('button');
+        pageButton.textContent = i;
+        pageButton.classList.add('shop-button');
+        pageButton.addEventListener('click', () => {
+            currentAchievementPage = i;
+            updateAchievementLogUI();
+        });
+        pagination.appendChild(pageButton);
+    }
+}
+
+// Modify the getAchievementProgress function to work with the new achievement structure
+function getAchievementProgress(category, requirement) {
+    if (category === 'f') { // 'f' for fish achievements
+        return totalFishCaught;
+    } else if (category === 'c') { // 'c' for collection achievements
+        return uniqueFishCaught;
+    }
+    return 0;
+}
+
+// Add event listeners for the achievement log
+document.getElementById('achievementLogButton').addEventListener('click', openAchievementLog);
+document.getElementById('closeAchievementLogBtn').addEventListener('click', closeAchievementLog);
+
+// Add this to the startGame function
+function startGame() {
+    gameStarted = true;
+    startScreen.style.display = 'none';
+    initializeCollectionLog();
+    updateAchievementLogUI(); // Initialize the achievement log UI
+    gameLoop();
 }
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -880,7 +1063,6 @@ function showAchievementPopup(achievement) {
         // Add these variables at the top of your script
         const upgradeShopUI = document.getElementById('upgradeShopUI');
         const rodUpgrades = document.getElementById('rodUpgrades');
-        const nextStageBtn = document.getElementById('nextStageBtn');
         const closeShopBtn = document.getElementById('closeShopBtn');
 
         // Add these variables at the top of your script
@@ -912,11 +1094,7 @@ function showAchievementPopup(achievement) {
         }
         let activeShop = null;
 
-        // Add event listeners for the shop buttons
-        nextStageBtn.addEventListener('click', () => {
-            advanceToNextStage();
-            closeUpgradeShop();
-        });
+
 
         closeShopBtn.addEventListener('click', closeUpgradeShop);
 
@@ -934,9 +1112,6 @@ function showAchievementPopup(achievement) {
                 button.onclick = () => buyRod(i);
                 rodUpgrades.appendChild(button);
             }
-
-            nextStageBtn.textContent = `Advance to Next Stage (500 coins)`;
-            nextStageBtn.disabled = currentStage >= maxStage || player.coins < 500;
         }
 
         // Add these new functions to handle the clone shop UI
@@ -954,8 +1129,8 @@ function showAchievementPopup(achievement) {
         }
 
         function updateCloneShopUI() {
-            buyCloneBtn.disabled = player.coins < 500 ** cloneCount;
-            buyCloneBtn.textContent = `Buy Clone (${500 ** cloneCount} coins)`;
+            buyCloneBtn.disabled = player.coins < 500 * (2 ** cloneCount);
+            buyCloneBtn.textContent = `Buy Clone (${500 * (2 ** cloneCount)} coins)`;
         }
 
         let isTravelShopOpen = false;
@@ -993,7 +1168,7 @@ function showAchievementPopup(achievement) {
                     button.textContent = `Travel to ${stage.name}`;
                     button.onclick = () => travelToStage(index + 1);
                 } else {
-                    const price = (index + 1) * 500 * (index ** 2);
+                    const price = (index + 1) * 500 * (index + 1);
                     button.textContent = `Buy ${stage.name} (${price} coins)`;
                     button.disabled = player.coins < price;
                     button.onclick = () => buyStage(index + 1);
@@ -1056,8 +1231,8 @@ function showAchievementPopup(achievement) {
 
         // Modify the buyClone function to work with the new UI
         function buyClone() {
-            if (player.coins >= 500 ** cloneCount) {
-                player.coins -= 500 ** cloneCount;
+            if (player.coins >= 500 * (2 ** cloneCount)) {
+                player.coins -= 500 * (2 ** cloneCount);
                 const newClone = new Clone(400, 400);
                 clones.push(newClone);
                 cloneCount++;
@@ -1172,7 +1347,7 @@ function showAchievementPopup(achievement) {
         function updateFishing() {
             if (isFishing) {
                 const currentRod = stages[currentStage - 1].rods[currentRodIndex];
-                fishingProgress += fishingDirection * currentRod.catchSpeed;
+                fishingProgress += fishingDirection * 1 / currentRod.catchSpeed ;
 
                 if (fishingProgress >= 100 || fishingProgress <= 0) {
                     fishingDirection *= -1; // Reverse direction
@@ -1716,12 +1891,6 @@ function drawFlag(x, y, width, height, color) {
             }
         });
 
-        function startGame() {
-            gameStarted = true;
-            startScreen.style.display = 'none';
-            initializeCollectionLog();
-            gameLoop();
-        }
 
         function initializeCollectionLog() {
     stages.forEach(stage => {
